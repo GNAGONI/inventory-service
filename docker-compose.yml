@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  server:
+    build: .
+    image: server
+    ports:
+      - '${INVENTORY_SERVICE_PORT}:${INVENTORY_SERVICE_PORT}'
+    command: npm run start
+    volumes:
+      - ./:/app
