@@ -1,35 +1,47 @@
 const dotenv = require('dotenv');
-const fs = require('fs');
-const path = require('path');
 const { Pool } = require('pg');
+const { dbQueryError } = require('../errors');
 
 dotenv.config();
 
-const client = new Pool({
+const pool = new Pool({
   user: process.env.POSTGRES_USER,
   host: process.env.POSTGRES_HOST,
   database: process.env.POSTGRES_DB,
   password: process.env.POSTGRES_PASSWORD,
   port: process.env.POSTGRES_PORT,
+  max: 10,
 });
 
-const dbConnect = cb => {
-  (async () => {
-    try {
-      await client.connect();
-      client.on('error', e => {
-        console.error(e);
-        process.exit(2);
+const dbQuery = async (queryStr, params) => {
+  const queryPromise = () =>
+    new Promise((resolve, reject) => {
+      pool.connect((connectionErr, client, release) => {
+        if (connectionErr) {
+          reject(dbQueryError('Database connection failed'));
+        } else {
+          client.on('error', e => {
+            client.release(true);
+            reject(dbQueryError('Database connection failed'));
+          });
+          client
+            .query(queryStr, params)
+            .then(res => {
+              resolve(res);
+            })
+            .catch(queryErr => {
+              reject(dbQueryError(queryErr.message));
+            })
+            .finally(() => {
+              release();
+            });
+        }
       });
-      cb();
-    } catch (e) {
-      console.error(e);
-      process.exit(2);
-    }
-  })();
+    });
+  const result = await queryPromise();
+  return result;
 };
 
 module.exports = {
-  client,
-  dbConnect,
+  dbQuery,
 };

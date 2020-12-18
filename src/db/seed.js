@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { client } = require('./index');
+const { dbQuery } = require('./index');
 
 const seed = async () => {
   try {
@@ -21,12 +21,10 @@ const seed = async () => {
       'utf8',
     );
 
-    await client.connect();
-    await client.query(tablesSQL);
-    await client.query(functionsSQL);
-    await client.query(viewsSQL);
-    await client.query(seedSQL);
-
+    await dbQuery(tablesSQL);
+    await dbQuery(functionsSQL);
+    await dbQuery(viewsSQL);
+    await dbQuery(seedSQL);
     process.exit();
   } catch (err) {
     console.error(err);
