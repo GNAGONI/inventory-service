@@ -1,5 +1,5 @@
 const express = require('express');
-const { param } = require('express-validator');
+const { param, body } = require('express-validator');
 const { inventoryController } = require('../controllers');
 const { validationMiddleware } = require('../middlewares');
 
@@ -17,21 +17,42 @@ inventoryRouter.get(
   inventoryController.user,
 );
 inventoryRouter.post(
-  '/grant/:userId',
+  '/grant',
   [
-    param('userId')
+    body('userId')
       .isUUID()
-      .withMessage('Param userId should be uuid'),
+      .withMessage('User id should be uuid'),
+    body('itemStorageId')
+      .isNumeric()
+      .withMessage('Item storage id should be a number')
+      .isFloat({ min: 1 })
+      .withMessage('Item storage id should be positive'),
+    body('itemAmount')
+      .isNumeric()
+      .withMessage('Item amount id should be a number')
+      .isFloat({ min: 1 })
+      .withMessage('Item amount should be positive'),
   ],
   validationMiddleware,
   inventoryController.grant,
 );
+
 inventoryRouter.post(
-  '/consume/:userId',
+  '/consume',
   [
-    param('userId')
+    body('userId')
       .isUUID()
-      .withMessage('Param userId should be uuid'),
+      .withMessage('User id should be uuid'),
+    body('itemStorageId')
+      .isNumeric()
+      .withMessage('Item storage id should be a number')
+      .isFloat({ min: 1 })
+      .withMessage('Item storage id should be positive'),
+    body('itemAmount')
+      .isNumeric()
+      .withMessage('Item amount id should be a number')
+      .isFloat({ min: 1 })
+      .withMessage('Item amount should be positive'),
   ],
   validationMiddleware,
   inventoryController.consume,

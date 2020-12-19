@@ -1,26 +1,41 @@
 DROP FUNCTION IF EXISTS grant_item_to_user CASCADE;
-CREATE OR REPLACE FUNCTION grant_item_to_user(item_storage_id INTEGER, user_id UUID, item_amount INTEGER)
-	RETURNS VOID AS $$
+CREATE OR REPLACE FUNCTION
+	grant_item_to_user(
+		item_storage_id INTEGER,
+		user_id UUID,
+		item_amount INTEGER
+	)	RETURNS VOID AS $$
 DECLARE
 	previous_amount INTEGER;
+	check_item_storage_id BOOLEAN;
 BEGIN
+	SELECT EXISTS(
+		SELECT * FROM items_storage
+		WHERE id = item_storage_id
+	) INTO check_item_storage_id;
+
+	IF (check_item_storage_id = false) THEN
+		RAISE EXCEPTION 'Item storage has no entity with provided id'; 
+	END IF;
+	
 	SELECT amount INTO previous_amount
 	FROM items_storage
 	WHERE id = item_storage_id;
 	
 	IF ((previous_amount - item_amount) < 0) THEN
 		RAISE EXCEPTION 'Requested amount of items is more than amount of items in items storage'; 
-	ELSE
-		UPDATE items_storage
-		SET amount = previous_amount - item_amount
-		WHERE id = item_storage_id;
-
-		INSERT INTO users_items (user_id, item_storage_id, amount)
-		VALUES 
-			(user_id, item_storage_id, item_amount);
 	END IF;
+	
+	UPDATE items_storage
+	SET amount = previous_amount - item_amount
+	WHERE id = item_storage_id;
+
+	INSERT INTO users_items (user_id, item_storage_id, amount)
+	VALUES (user_id, item_storage_id, item_amount);
+	
 END
 $$ LANGUAGE plpgsql;
+
 
 
 DROP FUNCTION IF EXISTS consume_item_from_user CASCADE;
@@ -29,32 +44,42 @@ CREATE OR REPLACE FUNCTION
 		item_storage_id_to_consume INTEGER,
 		user_id_to_consume UUID,
 		item_amount_to_consume INTEGER
-	)
-	RETURNS VOID AS $$
+	)	RETURNS VOID AS $$
 DECLARE
 	previous_amount INTEGER;
+	check_users_items BOOLEAN;
 BEGIN
+	SELECT EXISTS(
+		SELECT * FROM users_items
+		WHERE user_id = user_id_to_consume
+		AND item_storage_id = item_storage_id_to_consume
+	) INTO check_users_items;
+	
+	IF (check_users_items = false) THEN
+		RAISE EXCEPTION 'User have no items with provided id'; 
+	END IF;
+
 	SELECT amount INTO previous_amount
 	FROM users_items
 	WHERE user_id = user_id_to_consume
 	AND item_storage_id = item_storage_id_to_consume;
 	
 	IF ((previous_amount - item_amount_to_consume) < 0) THEN
-		RAISE EXCEPTION 'Amount of items to consume is more than the amount of items user have'; 
-	ELSE
-		UPDATE users_items
-		SET amount = previous_amount - item_amount_to_consume
-		WHERE user_id = user_id_to_consume
-		AND item_storage_id = item_storage_id_to_consume;
-		
-		IF ((previous_amount - item_amount_to_consume) = 0) THEN
-			DELETE FROM users_items
-			WHERE user_id = user_id_to_consume
-			AND item_storage_id = item_storage_id_to_consume
-			AND amount = 0;
-		END IF;
-		
+		RAISE EXCEPTION 'Amount of items to consume is more than the amount of items user have';
 	END IF;
+
+	UPDATE users_items
+	SET amount = previous_amount - item_amount_to_consume
+	WHERE user_id = user_id_to_consume
+	AND item_storage_id = item_storage_id_to_consume;
+	
+	IF ((previous_amount - item_amount_to_consume) = 0) THEN
+		DELETE FROM users_items
+		WHERE user_id = user_id_to_consume
+		AND item_storage_id = item_storage_id_to_consume
+		AND amount = 0;
+	END IF;
+
 END
 $$ LANGUAGE plpgsql;
 
