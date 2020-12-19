@@ -1,11 +1,11 @@
 const express = require('express');
 const { param, body } = require('express-validator');
 const { inventoryController } = require('../controllers');
-const { validationMiddleware } = require('../middlewares');
+const { validationMiddleware, authCheckMiddleware } = require('../middlewares');
 
 const inventoryRouter = express.Router();
 
-inventoryRouter.get('/me', inventoryController.me);
+inventoryRouter.get('/me', authCheckMiddleware, inventoryController.me);
 inventoryRouter.get(
   '/:userId',
   [
@@ -13,7 +13,9 @@ inventoryRouter.get(
       .isUUID()
       .withMessage('Param userId should be uuid'),
   ],
+  authCheckMiddleware,
   validationMiddleware,
+
   inventoryController.user,
 );
 inventoryRouter.post(
@@ -33,6 +35,7 @@ inventoryRouter.post(
       .isFloat({ min: 1 })
       .withMessage('Item amount should be positive'),
   ],
+  authCheckMiddleware,
   validationMiddleware,
   inventoryController.grant,
 );
@@ -54,6 +57,7 @@ inventoryRouter.post(
       .isFloat({ min: 1 })
       .withMessage('Item amount should be positive'),
   ],
+  authCheckMiddleware,
   validationMiddleware,
   inventoryController.consume,
 );

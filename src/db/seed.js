@@ -22,8 +22,8 @@ const seed = async () => {
     );
 
     await dbQuery(tablesSQL);
-    await dbQuery(functionsSQL);
     await dbQuery(viewsSQL);
+    await dbQuery(functionsSQL);
     await dbQuery(seedSQL);
     process.exit();
   } catch (err) {

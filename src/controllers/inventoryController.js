@@ -1,16 +1,15 @@
 const { dbQuery } = require('../db');
 
 const me = async (req, res) => {
-  const r = await dbQuery(
-    "SELECT * FROM grant_item_to_user(1, 'bfa81a1e-583d-48bc-a50c-a7460dab5ffb', 100000)",
-  );
-  console.log(r);
-
-  res.send(200);
+  const userId = req.user.id;
+  const result = await dbQuery(`SELECT * FROM find_user_items('${userId}')`);
+  res.send(result.rows);
 };
 
 const user = async (req, res) => {
-  res.send(200);
+  const { userId } = req.params;
+  const result = await dbQuery(`SELECT * FROM find_user_items('${userId}')`);
+  res.send(result.rows);
 };
 
 const grant = async (req, res) => {

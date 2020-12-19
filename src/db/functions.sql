@@ -145,3 +145,13 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+DROP FUNCTION IF EXISTS find_user_items CASCADE;
+CREATE OR REPLACE FUNCTION find_user_items(id UUID)
+	RETURNS SETOF users_preprocessed_items_array AS $$
+BEGIN
+	RETURN QUERY SELECT * FROM users_preprocessed_items_array
+	WHERE user_id = id;
+END;
+$$ LANGUAGE plpgsql;
+
+
