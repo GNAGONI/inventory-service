@@ -21,6 +21,5 @@ module.exports = {
     'no-console': 0,
     'linebreak-style': 0,
     'no-unused-vars': 0,
-    'implicit-arrow-linebreak': ['error', 'below'],
   },
 };

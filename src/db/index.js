@@ -14,31 +14,30 @@ const pool = new Pool({
 });
 
 const dbQuery = async (queryStr, params) => {
-  const queryPromise = () =>
-    new Promise((resolve, reject) => {
-      pool.connect((connectionErr, client, release) => {
-        if (connectionErr) {
+  const queryPromise = new Promise((resolve, reject) => {
+    pool.connect((connectionErr, client, release) => {
+      if (connectionErr) {
+        reject(dbQueryError('Database connection failed'));
+      } else {
+        client.on('error', e => {
+          client.release(true);
           reject(dbQueryError('Database connection failed'));
-        } else {
-          client.on('error', e => {
-            client.release(true);
-            reject(dbQueryError('Database connection failed'));
+        });
+        client
+          .query(queryStr, params)
+          .then(res => {
+            resolve(res);
+          })
+          .catch(queryErr => {
+            reject(dbQueryError(queryErr.message));
+          })
+          .finally(() => {
+            release();
           });
-          client
-            .query(queryStr, params)
-            .then(res => {
-              resolve(res);
-            })
-            .catch(queryErr => {
-              reject(dbQueryError(queryErr.message));
-            })
-            .finally(() => {
-              release();
-            });
-        }
-      });
+      }
     });
-  const result = await queryPromise();
+  });
+  const result = await queryPromise;
   return result;
 };
 
