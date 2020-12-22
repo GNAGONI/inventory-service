@@ -1,9 +1,9 @@
 DROP FUNCTION IF EXISTS grant_item_to_user CASCADE;
 CREATE OR REPLACE FUNCTION
 	grant_item_to_user(
-		item_storage_id INTEGER,
-		user_id UUID,
-		item_amount INTEGER
+		item_storage_id_to_grant INTEGER,
+		user_id_to_grant UUID,
+		item_amount_to_grant INTEGER
 	)	RETURNS VOID AS $$
 DECLARE
 	previous_amount INTEGER;
@@ -11,7 +11,7 @@ DECLARE
 BEGIN
 	SELECT EXISTS(
 		SELECT * FROM items_storage
-		WHERE id = item_storage_id
+		WHERE id = item_storage_id_to_grant
 	) INTO check_item_storage_id;
 
 	IF (check_item_storage_id = false) THEN
@@ -20,19 +20,22 @@ BEGIN
 	
 	SELECT amount INTO previous_amount
 	FROM items_storage
-	WHERE id = item_storage_id;
+	WHERE id = item_storage_id_to_grant;
 	
-	IF ((previous_amount - item_amount) < 0) THEN
+	IF ((previous_amount - item_amount_to_grant) < 0) THEN
 		RAISE EXCEPTION 'Requested amount of items is more than amount of items in items storage'; 
 	END IF;
 	
 	UPDATE items_storage
-	SET amount = previous_amount - item_amount
-	WHERE id = item_storage_id;
+	SET amount = previous_amount - item_amount_to_grant
+	WHERE id = item_storage_id_to_grant;
 
 	INSERT INTO users_items (user_id, item_storage_id, amount)
-	VALUES (user_id, item_storage_id, item_amount);
-	
+	VALUES (user_id_to_grant, item_storage_id_to_grant, item_amount_to_grant)
+	ON CONFLICT (user_id, item_storage_id)
+	DO
+		UPDATE SET amount = users_items.amount + item_amount_to_grant;
+
 END
 $$ LANGUAGE plpgsql;
 

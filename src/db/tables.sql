@@ -35,5 +35,6 @@ CREATE TABLE item_storage_feature_value (
 CREATE TABLE users_items (
   user_id UUID,
   item_storage_id INTEGER REFERENCES items_storage(id) ON DELETE SET NULL,
-  amount INTEGER
+  amount INTEGER,
+  UNIQUE (user_id, item_storage_id)
 );
