@@ -1,7 +1,10 @@
 const express = require('express');
 const { param, body } = require('express-validator');
+const {
+  validationMiddleware,
+  authCheckMiddleware,
+} = require('@microservices-inc/common');
 const { inventoryController } = require('../controllers');
-const { validationMiddleware, authCheckMiddleware } = require('../middlewares');
 
 const inventoryRouter = express.Router();
 
