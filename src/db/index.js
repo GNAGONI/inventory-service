@@ -1,6 +1,6 @@
 const dotenv = require('dotenv');
 const { Pool } = require('pg');
-const { dbQueryError } = require('../errors');
+const { dbQueryError } = require('@microservices-inc/common');
 
 dotenv.config();
 
