@@ -2,13 +2,19 @@ const express = require('express');
 const { param, body } = require('express-validator');
 const {
   validationMiddleware,
+  scopeCheckMiddleware,
   authCheckMiddleware,
 } = require('@microservices-inc/common');
 const { inventoryController } = require('../controllers');
 
 const inventoryRouter = express.Router();
 
-inventoryRouter.get('/me', authCheckMiddleware, inventoryController.me);
+inventoryRouter.get(
+  '/me',
+  authCheckMiddleware,
+  scopeCheckMiddleware('inventory:me:read'),
+  inventoryController.me,
+);
 inventoryRouter.get(
   '/:userId',
   [
@@ -17,6 +23,7 @@ inventoryRouter.get(
       .withMessage('Param userId should be uuid'),
   ],
   authCheckMiddleware,
+  scopeCheckMiddleware('inventory:read'),
   validationMiddleware,
 
   inventoryController.user,
@@ -39,6 +46,7 @@ inventoryRouter.post(
       .withMessage('Item amount should be positive'),
   ],
   authCheckMiddleware,
+  scopeCheckMiddleware('inventory:grant'),
   validationMiddleware,
   inventoryController.grant,
 );
@@ -61,6 +69,7 @@ inventoryRouter.post(
       .withMessage('Item amount should be positive'),
   ],
   authCheckMiddleware,
+  scopeCheckMiddleware('inventory:consume'),
   validationMiddleware,
   inventoryController.consume,
 );
